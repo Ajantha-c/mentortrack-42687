@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,9 +37,27 @@ app = FastAPI(
     openapi_tags=openapi_tags,
 )
 
+# CORS:
+# - Frontend runs on :3000 and calls backend on :3001.
+# - Make origins configurable via env var to support different preview/deploy URLs.
+_raw_origins = (os.getenv("CORS_ALLOW_ORIGINS") or "").strip()
+_allow_origins = (
+    [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    if _raw_origins
+    else [
+        # Local dev
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        # Kavia preview frontend origin (MUST match exactly; scheme/host/port)
+        "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
+        # Allow the specific frontend origin observed in the console error attachment
+        "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
+    ]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
