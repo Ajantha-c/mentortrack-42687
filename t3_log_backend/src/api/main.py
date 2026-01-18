@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routers.core_email import router as core_email_router
@@ -52,12 +52,18 @@ _allow_origins = (
         # Local dev
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        # Kavia preview frontend origins (MUST match exactly; scheme/host/port)
+        # Kavia preview frontend origin (MUST match exactly; scheme/host/port)
         "https://vscode-internal-35884-beta.beta01.cloud.kavia.ai:3000",
-        # Previous preview origin (kept to avoid regressions when port changes)
+        # Previous preview origin (kept to avoid regressions when preview instances change)
         "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
     ]
 )
+
+# Required by request:
+# - Allow methods ['GET','POST','OPTIONS']
+# - Allow headers ['Content-Type','Authorization']
+_allowed_methods = ["GET", "POST", "OPTIONS"]
+_allowed_headers = ["Content-Type", "Authorization"]
 
 # Mount middleware BEFORE routers (required so it applies to all routes).
 app.add_middleware(
@@ -65,10 +71,30 @@ app.add_middleware(
     allow_origins=_allow_origins,
     allow_credentials=True,
     # Explicit methods for clearer preflight behavior
-    allow_methods=["OPTIONS", "POST", "GET"],
+    allow_methods=_allowed_methods,
     # Explicit headers requested
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=_allowed_headers,
 )
+
+# PUBLIC_INTERFACE
+@app.options("/{full_path:path}", include_in_schema=False)
+async def cors_preflight(full_path: str, request: Request) -> Response:
+    """Catch-all OPTIONS handler to guarantee CORS preflight works.
+
+    Some deployments / proxies can behave unexpectedly with implicit preflight handling.
+    This endpoint ensures the application always has an OPTIONS route, while still
+    relying on CORSMiddleware to set the Access-Control-Allow-* headers.
+
+    Parameters:
+        full_path: Requested path (captured).
+        request: FastAPI request.
+
+    Returns:
+        Empty 204 response; CORSMiddleware should attach CORS headers based on Origin.
+    """
+    # Note: Do NOT manually set Access-Control-Allow-* here; CORSMiddleware will do it
+    # based on the configured allow_origins/methods/headers and the request Origin.
+    return Response(status_code=204)
 
 @app.get("/", tags=["System"], summary="Health Check", operation_id="health_check")
 # PUBLIC_INTERFACE

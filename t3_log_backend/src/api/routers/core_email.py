@@ -84,7 +84,8 @@ async def core_send_email(payload: CoreSendEmailRequest) -> CoreSendEmailRespons
     resend = ResendClient()
 
     # IMPORTANT: For Resend, this must be a verified sender/domain.
-    from_email = get_env("RESEND_FROM_EMAIL", "T3 Log <no-reply@t3log.example>")
+    # Default requested by user: onboarding@resend.dev
+    from_email = get_env("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     subject = payload.subject.strip()
     if not subject.lower().startswith("t3 log update:"):

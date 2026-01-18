@@ -284,7 +284,8 @@ async def send_intern_new_task_email(payload: InternNewTaskRequest) -> SendEmail
     )
 
     # IMPORTANT: For Resend, this must be a verified sender/domain.
-    from_email = get_env("RESEND_FROM_EMAIL", "T3 Log <no-reply@t3log.example>")
+    # Default requested by user: onboarding@resend.dev
+    from_email = get_env("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     # Reuse the existing “Steel Cyan” capable route? Here we send plain text + minimal HTML-ish fallback
     # through the templates used elsewhere. To keep it simple and consistent with existing code,
@@ -367,7 +368,8 @@ async def send_intern_submission_email(payload: InternSubmissionRequest) -> Send
 
     # Configure a default "from" that can be overridden by env.
     # IMPORTANT: For Resend, this must be a verified sender/domain.
-    from_email = get_env("RESEND_FROM_EMAIL", "T3 Log <no-reply@t3log.example>")
+    # Default requested by user: onboarding@resend.dev
+    from_email = get_env("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     try:
         resp = await resend.send_email(
