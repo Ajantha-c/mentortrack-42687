@@ -8,10 +8,24 @@ from src.api.core.config import get_env
 
 
 class ResendClient:
-    """Minimal Resend API client for sending emails."""
+    """Minimal Resend API client for sending emails.
+
+    Note:
+        The canonical env var is `RESEND_API_KEY`. However, some environments may
+        mistakenly store it as `RESEND_API-KEY` (hyphen). We support that as a
+        fallback to reduce configuration friction while keeping the canonical
+        name in docs.
+    """
 
     def __init__(self) -> None:
-        self.api_key = get_env("RESEND_API_KEY")
+        # Prefer canonical env var name.
+        api_key = None
+        try:
+            api_key = get_env("RESEND_API_KEY")
+        except RuntimeError:
+            # Fallback to the (common) mis-typed env var name from user input.
+            api_key = get_env("RESEND_API-KEY")
+        self.api_key = api_key
 
     async def send_email(
         self,

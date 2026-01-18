@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.routers.core_email import router as core_email_router
 from src.api.routers.notifications_email import router as notifications_email_router
 
 openapi_tags = [
@@ -11,6 +12,10 @@ openapi_tags = [
     {
         "name": "Notifications",
         "description": "Server-side notification endpoints (email, etc.).",
+    },
+    {
+        "name": "Email",
+        "description": "Core server-side email send endpoints (Resend).",
     },
 ]
 
@@ -46,3 +51,4 @@ def health_check():
 
 
 app.include_router(notifications_email_router)
+app.include_router(core_email_router)
