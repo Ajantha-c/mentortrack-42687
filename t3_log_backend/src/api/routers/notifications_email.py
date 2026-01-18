@@ -422,7 +422,8 @@ async def send_mentor_update_email(payload: MentorUpdateRequest) -> SendEmailRes
     )
 
     # IMPORTANT: For Resend, this must be a verified sender/domain.
-    from_email = get_env("RESEND_FROM_EMAIL", "T3 Log <no-reply@t3log.example>")
+    # Default requested by user: onboarding@resend.dev
+    from_email = get_env("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     try:
         resp = await resend.send_email(
