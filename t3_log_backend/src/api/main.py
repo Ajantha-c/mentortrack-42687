@@ -39,7 +39,11 @@ app = FastAPI(
 
 # CORS:
 # - Frontend runs on :3000 and calls backend on :3001.
-# - Make origins configurable via env var to support different preview/deploy URLs.
+# - Origins are configurable via env var `CORS_ALLOW_ORIGINS` to support different preview/deploy URLs.
+#
+# IMPORTANT:
+# - Allowing the *exact* frontend preview origin is required (scheme/host/port must match).
+# - Preflight requests use OPTIONS and must not be redirected or missing CORS headers.
 _raw_origins = (os.getenv("CORS_ALLOW_ORIGINS") or "").strip()
 _allow_origins = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
@@ -48,21 +52,23 @@ _allow_origins = (
         # Local dev
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        # Kavia preview frontend origin (MUST match exactly; scheme/host/port)
-        "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
-        # Allow the specific frontend origin observed in the console error attachment
+        # Kavia preview frontend origins (MUST match exactly; scheme/host/port)
+        "https://vscode-internal-35884-beta.beta01.cloud.kavia.ai:3000",
+        # Previous preview origin (kept to avoid regressions when port changes)
         "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
     ]
 )
 
+# Mount middleware BEFORE routers (required so it applies to all routes).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Explicit methods for clearer preflight behavior
+    allow_methods=["OPTIONS", "POST", "GET"],
+    # Explicit headers requested
+    allow_headers=["Content-Type", "Authorization"],
 )
-
 
 @app.get("/", tags=["System"], summary="Health Check", operation_id="health_check")
 # PUBLIC_INTERFACE
