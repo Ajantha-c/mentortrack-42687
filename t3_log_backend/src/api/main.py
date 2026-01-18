@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routers.core_email import router as core_email_router
 from src.api.routers.notifications_email import router as notifications_email_router
+from src.api.routers.supabase_hooks import router as supabase_hooks_router
 
 openapi_tags = [
     {
@@ -16,6 +17,10 @@ openapi_tags = [
     {
         "name": "Email",
         "description": "Core server-side email send endpoints (Resend).",
+    },
+    {
+        "name": "Supabase Hooks",
+        "description": "Endpoints intended to be called by Supabase Database Webhooks / triggers.",
     },
 ]
 
@@ -52,3 +57,4 @@ def health_check():
 
 app.include_router(notifications_email_router)
 app.include_router(core_email_router)
+app.include_router(supabase_hooks_router)
