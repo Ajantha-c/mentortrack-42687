@@ -3,36 +3,16 @@ import os
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routers.core_email import router as core_email_router
-from src.api.routers.notifications_email import router as notifications_email_router
-from src.api.routers.supabase_hooks import router as supabase_hooks_router
-
 openapi_tags = [
     {
         "name": "System",
         "description": "Health and system endpoints.",
     },
-    {
-        "name": "Notifications",
-        "description": "Server-side notification endpoints (email, etc.).",
-    },
-    {
-        "name": "Email",
-        "description": "Core server-side email send endpoints (Resend).",
-    },
-    {
-        "name": "Supabase Hooks",
-        "description": "Endpoints intended to be called by Supabase Database Webhooks / triggers.",
-    },
 ]
 
 app = FastAPI(
     title="T3 Log Backend API",
-    description=(
-        "API layer for T3 Log: mentorship workflows, tasks, and server-side notifications.\n\n"
-        "Email notifications are sent server-side via Resend. Frontend should never "
-        "ship or access RESEND_API_KEY."
-    ),
+    description="API layer for T3 Log: mentorship workflows and tasks.",
     version="0.1.0",
     openapi_tags=openapi_tags,
 )
@@ -77,9 +57,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allow_origins,
     allow_credentials=True,
-    # Explicit methods for clearer preflight behavior
     allow_methods=_allowed_methods,
-    # Explicit headers requested
     allow_headers=_allowed_headers,
 )
 
@@ -99,9 +77,8 @@ async def cors_preflight(full_path: str, request: Request) -> Response:
     Returns:
         Empty 204 response; CORSMiddleware should attach CORS headers based on Origin.
     """
-    # Note: Do NOT manually set Access-Control-Allow-* here; CORSMiddleware will do it
-    # based on the configured allow_origins/methods/headers and the request Origin.
     return Response(status_code=204)
+
 
 @app.get("/", tags=["System"], summary="Health Check", operation_id="health_check")
 # PUBLIC_INTERFACE
@@ -112,8 +89,3 @@ def health_check():
         JSON payload indicating service is alive.
     """
     return {"message": "Healthy"}
-
-
-app.include_router(notifications_email_router)
-app.include_router(core_email_router)
-app.include_router(supabase_hooks_router)
