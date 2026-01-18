@@ -24,20 +24,24 @@ def _constant_time_equals(a: str, b: str) -> bool:
 
 
 async def _verify_supabase_hook_secret(request: Request) -> None:
-    """Verify request contains correct shared secret for Supabase -> backend calls."""
-    expected = get_env("SUPABASE_HOOK_SECRET")
-    provided = (
-        request.headers.get("x-supabase-hook-secret")
-        or request.headers.get("x-webhook-secret")
-        or request.headers.get("authorization")
-        or ""
-    ).strip()
+    """Verify request contains correct shared secret for Supabase -> backend calls.
 
-    # Allow "Bearer <secret>" as well.
-    if provided.lower().startswith("bearer "):
-        provided = provided.split(" ", 1)[1].strip()
+    This relies exclusively on the SUPABASE_HOOK_SECRET environment variable and
+    never logs or returns secret values.
+    """
+    expected = get_env("SUPABASE_HOOK_SECRET")
+
+    # Primary supported mechanism: Supabase webhook header.
+    provided = (request.headers.get("x-supabase-hook-secret") or "").strip()
+
+    # Secondary supported mechanism: Authorization: Bearer <secret>
+    if not provided:
+        auth = (request.headers.get("authorization") or "").strip()
+        if auth.lower().startswith("bearer "):
+            provided = auth.split(" ", 1)[1].strip()
 
     if not provided or not _constant_time_equals(provided, expected):
+        # Intentionally do not include any secret material in errors/logs.
         raise HTTPException(status_code=401, detail="Unauthorized Supabase hook call.")
 
 
