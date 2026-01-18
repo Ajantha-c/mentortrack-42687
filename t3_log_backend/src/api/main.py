@@ -52,18 +52,25 @@ _allow_origins = (
         # Local dev
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        # Kavia preview frontend origin (MUST match exactly; scheme/host/port)
+        # Kavia preview frontend origin(s) (MUST match exactly; scheme/host/port)
         "https://vscode-internal-35884-beta.beta01.cloud.kavia.ai:3000",
-        # Previous preview origin (kept to avoid regressions when preview instances change)
+        # User-specified allowed origin
         "https://vscode-internal-41480-beta.beta01.cloud.kavia.ai:3000",
     ]
 )
 
-# Required by request:
-# - Allow methods ['GET','POST','OPTIONS']
-# - Allow headers ['Content-Type','Authorization']
+# CORS requirements for frontend -> backend calls:
+# - Ensure POST routes work (preflight uses OPTIONS)
+# - Ensure requested headers are allowed (Authorization/Content-Type)
+# - Allow common browser preflight request headers so middleware can respond properly.
 _allowed_methods = ["GET", "POST", "OPTIONS"]
-_allowed_headers = ["Content-Type", "Authorization"]
+_allowed_headers = [
+    "Content-Type",
+    "Authorization",
+    # Common preflight request headers sent by browsers / fetch:
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+]
 
 # Mount middleware BEFORE routers (required so it applies to all routes).
 app.add_middleware(
